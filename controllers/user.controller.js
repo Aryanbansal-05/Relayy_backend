@@ -15,11 +15,8 @@ const signup = async (req, res) => {
     }
 
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-    if (existingUser) {
-      return res
-        .status(httpStatus.CONFLICT)
-        .json({ message: "User already exists" });
-    }
+    if (existingUser)
+      return res.status(httpStatus.CONFLICT).json({ message: "User already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -31,7 +28,6 @@ const signup = async (req, res) => {
       hostel,
     });
 
-    // ✅ Generate token tied to user ID
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
@@ -42,11 +38,10 @@ const signup = async (req, res) => {
     newUser.token = token;
     await newUser.save();
 
-    // ✅ Use flexible cookie configuration
     res.cookie("auth_token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // HTTPS in production only
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // "Lax" for localhost
+      secure: true, // ✅ required for HTTPS (Render)
+      sameSite: "None", // ✅ required for cross-domain cookies
       expires: sessionExpiry,
     });
 
@@ -75,25 +70,20 @@ const login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    if (!username || !password) {
+    if (!username || !password)
       return res
         .status(httpStatus.BAD_REQUEST)
         .json({ message: "Please provide username and password" });
-    }
 
     const user = await User.findOne({ username });
-    if (!user) {
-      return res
-        .status(httpStatus.NOT_FOUND)
-        .json({ message: "User not found" });
-    }
+    if (!user)
+      return res.status(httpStatus.NOT_FOUND).json({ message: "User not found" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+    if (!isMatch)
       return res
         .status(httpStatus.UNAUTHORIZED)
         .json({ message: "Invalid credentials" });
-    }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
@@ -105,11 +95,10 @@ const login = async (req, res) => {
     user.token = token;
     await user.save({ validateBeforeSave: false });
 
-    // ✅ Proper cookie setup
     res.cookie("auth_token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // false in dev
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      secure: true,
+      sameSite: "None",
       expires: sessionExpiry,
     });
 
@@ -138,22 +127,20 @@ const logout = async (req, res) => {
   try {
     res.clearCookie("auth_token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      secure: true,
+      sameSite: "None",
     });
-
-    return res.status(200).json({ message: "Logout successful" });
+    res.status(200).json({ message: "Logout successful" });
   } catch (error) {
     console.error("Logout error:", error);
-    res
-      .status(500)
-      .json({ message: "Server error during logout", error: error.message });
+    res.status(500).json({ message: "Server error during logout" });
   }
 };
 
 // ---------------- VERIFY USER ----------------
 const verifyUser = async (req, res) => {
   try {
+    console.log("Cookies received:", req.cookies);
     const token = req.cookies.auth_token;
     if (!token) return res.status(401).json({ message: "No token found" });
 
