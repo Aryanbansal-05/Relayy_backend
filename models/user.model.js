@@ -7,9 +7,10 @@ const userSchema = new Schema(
     password: { type: String, required: true },
     college: { type: String, required: true, trim: true },
     hostel: { type: String, required: true, trim: true },
-    token: { type: String },
     otp: { type: String },
+    otpExpires: { type: Date },
     isVerified: { type: Boolean, default: false },
+    token: { type: String },
     sessionExpiry: { type: Date },
   },
   { timestamps: true }

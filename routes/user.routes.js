@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { signup, login, logout, verifyUser } from "../controllers/user.controller.js"; // ✅ renamed to match improved controller
+import { signup, login, logout, verifyUser,verifyOtp,resendOtp } from "../controllers/user.controller.js"; // ✅ renamed to match improved controller
 import { User } from "../models/user.model.js";
 
 const router = Router();
@@ -7,6 +7,8 @@ const router = Router();
 router.post("/signup", signup);
 router.post("/login", login);
 router.post("/logout", logout);
+router.post("/verify-otp", verifyOtp);
+router.post("/resend-otp", resendOtp);
 router.get("/verify", verifyUser);
 // Example: routes/userRoutes.js
 router.get("/:email", async (req, res) => {
