@@ -13,48 +13,37 @@ const app = express();
 const server = createServer(app);
 
 // ======================================================
-// ✅ 1. CORS Configuration (Local + Production Domains)
+// ✅ 1. CORS Configuration
 // ======================================================
 const allowedOrigins = [
-  "http://localhost:5173",        // Local frontend
-  "https://relayy-mu.vercel.app", // Old deployment
-  "https://relayy.shop",          // ✅ New custom domain
-  "https://www.relayy.shop"       // ✅ WWW version
+  "http://localhost:5173",
+  "https://relayy-mu.vercel.app",
+  "https://relayy.shop",
+  "https://www.relayy.shop",
+  "https://relayy-backend-9war.onrender.com" // ✅ Add your backend URL
 ];
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       console.warn("❌ Blocked by CORS:", origin);
-      callback(new Error("Not allowed by CORS"));
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
     }
   },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  credentials: true, // ✅ Allow cookies and credentials
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 };
 
-// ✅ Apply CORS globally (before routes)
+// ✅ Apply CORS middleware FIRST (before any routes)
 app.use(cors(corsOptions));
-
-// ✅ Handle CORS preflight requests manually (Express 5 safe)
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
-    res.setHeader(
-      "Access-Control-Allow-Methods",
-      "GET, POST, PUT, DELETE, OPTIONS"
-    );
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type, Authorization"
-    );
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    return res.sendStatus(204); // ✅ No Content, successful preflight
-  }
-  next();
-});
 
 // ======================================================
 // ✅ 2. Middleware
@@ -64,19 +53,33 @@ app.use(express.json({ limit: "50kb" }));
 app.use(express.urlencoded({ extended: true, limit: "50kb" }));
 
 // ======================================================
-// ✅ 3. Routes
+// ✅ 3. Debug Logs (for Development)
+// ======================================================
+if (process.env.NODE_ENV !== "production") {
+  app.use((req, res, next) => {
+    console.log("🛰️ Request:", req.method, req.originalUrl);
+    console.log("🌍 Origin:", req.headers.origin);
+    console.log("📦 Cookies:", req.cookies);
+    next();
+  });
+}
+
+// ======================================================
+// ✅ 4. Routes
 // ======================================================
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/products", Productrouter);
 
 app.get("/", (req, res) => {
-  res
-    .status(200)
-    .send("✅ Campus Marketplace Backend is Running with relayy.shop!");
+  res.status(200).json({
+    status: "success",
+    message: "✅ Campus Marketplace Backend is Running!",
+    allowedOrigins
+  });
 });
 
 // ======================================================
-// ✅ 4. Database Connection
+// ✅ 5. Database Connection
 // ======================================================
 const startServer = async () => {
   try {
@@ -85,7 +88,7 @@ const startServer = async () => {
 
     const PORT = process.env.PORT || 8000;
     server.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT} (${process.env.NODE_ENV})`);
+      console.log(`🚀 Server running on port ${PORT}`);
       console.log("🌍 Allowed Origins:", allowedOrigins.join(", "));
     });
   } catch (err) {
@@ -95,14 +98,3 @@ const startServer = async () => {
 };
 
 startServer();
-
-// ======================================================
-// ✅ 5. Debug Logs (for Development Only)
-// ======================================================
-if (process.env.NODE_ENV !== "production") {
-  app.use((req, res, next) => {
-    console.log("🛰️ Request:", req.method, req.originalUrl);
-    console.log("📦 Cookies:", req.cookies);
-    next();
-  });
-}
