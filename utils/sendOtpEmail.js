@@ -1,29 +1,32 @@
-import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+import SibApiV3Sdk from "sib-api-v3-sdk";
+
+dotenv.config();
 
 export const sendOtpEmail = async (email, otp) => {
   try {
-    // ✅ Create SMTP transporter using Brevo credentials
-   const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  secure: false, // use STARTTLS
-  requireTLS: true, // force TLS upgrade
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false, // avoid certificate mismatch rejection
-  },
-});
+    // 🔑 Initialize Brevo API client
+    const defaultClient = SibApiV3Sdk.ApiClient.instance;
+    const apiKey = defaultClient.authentications["api-key"];
+    apiKey.apiKey = process.env.BREVO_API_KEY;
 
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
-    // ✅ Email content
-    const mailOptions = {
-      from: `"Relayy" <${process.env.FROM_EMAIL}>`,  // visible sender
-      to: email,
+    // ✉️ Sender info (must be verified sender in Brevo)
+    const sender = {
+      email: process.env.FROM_EMAIL,
+      name: "Relayy",
+    };
+
+    // 📩 Receiver
+    const receivers = [{ email }];
+
+    // 📨 Send email via HTTPS API
+    await apiInstance.sendTransacEmail({
+      sender,
+      to: receivers,
       subject: "Your Relayy OTP Verification Code",
-      html: `
+      htmlContent: `
         <div style="font-family: 'Josefin Sans', Arial, sans-serif; background-color: #f3f4f6; padding: 40px 0;">
           <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden;">
             <div style="background: linear-gradient(135deg, #059669, #10b981); color: white; text-align: center; padding: 20px 0;">
@@ -48,11 +51,9 @@ export const sendOtpEmail = async (email, otp) => {
           </div>
         </div>
       `,
-    };
+    });
 
-    // ✅ Send email
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ OTP email sent to ${email}:`, info.response);
+    console.log(`✅ OTP email sent to ${email}`);
   } catch (error) {
     console.error(`❌ Failed to send OTP to ${email}:`, error.message);
     throw error;
