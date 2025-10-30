@@ -3,15 +3,20 @@ import nodemailer from "nodemailer";
 export const sendOtpEmail = async (email, otp) => {
   try {
     // ✅ Create SMTP transporter using Brevo credentials
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,       // smtp-relay.brevo.com
-      port: process.env.SMTP_PORT,       // 587
-      secure: false,                     // use TLS, not SSL
-      auth: {
-        user: process.env.EMAIL_USER,    // e.g. 9a294b001@smtp-brevo.com
-        pass: process.env.EMAIL_PASS,    // xsmtpsib-... (SMTP key)
-      },
-    });
+   const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: false, // use STARTTLS
+  requireTLS: true, // force TLS upgrade
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false, // avoid certificate mismatch rejection
+  },
+});
+
 
     // ✅ Email content
     const mailOptions = {
