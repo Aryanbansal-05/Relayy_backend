@@ -18,7 +18,7 @@ const server = createServer(app);
 const allowedOrigins = [
   "http://localhost:5173",        // local React frontend
   "https://relayy-mu.vercel.app", // deployed Vercel frontend
-  "https://www.relayy.shop/",
+  "https://www.relayy.shop",
 ];
 
 app.use(
@@ -26,7 +26,7 @@ app.use(
     origin: [
       "http://localhost:5173", // Vite dev
       "https://relayy-mu.vercel.app", // Deployed frontend
-      "https://www.relayy.shop/",
+      "https://www.relayy.shop",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true, // ✅ required to send cookies
