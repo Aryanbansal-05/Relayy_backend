@@ -16,14 +16,14 @@ const server = createServer(app);
 // ✅ 1. CORS Configuration (Local + Production Domains)
 // ======================================================
 const allowedOrigins = [
-  "http://localhost:5173",        // Local React frontend
-  "https://relayy-mu.vercel.app", // Old Vercel deployment
-  "https://relayy.shop",          // ✅ Custom domain
-  "https://www.relayy.shop"       // ✅ www version
+  "http://localhost:5173",        // Local frontend
+  "https://relayy-mu.vercel.app", // Old deployment
+  "https://relayy.shop",          // ✅ New custom domain
+  "https://www.relayy.shop"       // ✅ WWW version
 ];
 
 const corsOptions = {
-  origin: function (origin, callback) {
+  origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -32,14 +32,29 @@ const corsOptions = {
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  credentials: true, // ✅ Required for cookies (auth)
+  credentials: true, // ✅ Allow cookies and credentials
 };
 
-// ✅ Apply CORS globally (important: before any routes)
+// ✅ Apply CORS globally (before routes)
 app.use(cors(corsOptions));
 
-// ✅ Handle preflight requests explicitly (for browsers)
-app.options("*", cors(corsOptions));
+// ✅ Handle CORS preflight requests manually (Express 5 safe)
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, OPTIONS"
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization"
+    );
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    return res.sendStatus(204); // ✅ No Content, successful preflight
+  }
+  next();
+});
 
 // ======================================================
 // ✅ 2. Middleware
@@ -86,7 +101,7 @@ startServer();
 // ======================================================
 if (process.env.NODE_ENV !== "production") {
   app.use((req, res, next) => {
-    console.log("🛰️  Request:", req.method, req.originalUrl);
+    console.log("🛰️ Request:", req.method, req.originalUrl);
     console.log("📦 Cookies:", req.cookies);
     next();
   });
