@@ -36,6 +36,22 @@ app.use(
     credentials: true, // ✅ Required to allow cookies (auth)
   })
 );
+// ======================================================
+// ✅ 1.5 Handle CORS Preflight Requests
+// ======================================================
+app.options("*", cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn("❌ Blocked by CORS (preflight):", origin);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true,
+}));
+
 
 // ======================================================
 // ✅ 2. Middleware
