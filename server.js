@@ -13,45 +13,33 @@ const app = express();
 const server = createServer(app);
 
 // ======================================================
-// ✅ 1. Dynamic CORS Configuration (Local + Deployed Domains)
+// ✅ 1. CORS Configuration (Local + Production Domains)
 // ======================================================
 const allowedOrigins = [
   "http://localhost:5173",        // Local React frontend
   "https://relayy-mu.vercel.app", // Old Vercel deployment
-  "https://relayy.shop",          // ✅ New custom domain
-  "https://www.relayy.shop",      // ✅ Also allow www just in case
+  "https://relayy.shop",          // ✅ Custom domain
+  "https://www.relayy.shop"       // ✅ www version
 ];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn("❌ Blocked by CORS:", origin);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    credentials: true, // ✅ Required to allow cookies (auth)
-  })
-);
-// ======================================================
-// ✅ 1.5 Handle CORS Preflight Requests
-// ======================================================
-app.options("*", cors({
-  origin: (origin, callback) => {
+const corsOptions = {
+  origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.warn("❌ Blocked by CORS (preflight):", origin);
+      console.warn("❌ Blocked by CORS:", origin);
       callback(new Error("Not allowed by CORS"));
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  credentials: true,
-}));
+  credentials: true, // ✅ Required for cookies (auth)
+};
 
+// ✅ Apply CORS globally (important: before any routes)
+app.use(cors(corsOptions));
+
+// ✅ Handle preflight requests explicitly (for browsers)
+app.options("*", cors(corsOptions));
 
 // ======================================================
 // ✅ 2. Middleware
@@ -67,7 +55,9 @@ app.use("/api/v1/users", userRouter);
 app.use("/api/v1/products", Productrouter);
 
 app.get("/", (req, res) => {
-  res.status(200).send("✅ Campus Marketplace Backend is Running with relayy.shop!");
+  res
+    .status(200)
+    .send("✅ Campus Marketplace Backend is Running with relayy.shop!");
 });
 
 // ======================================================
@@ -80,7 +70,7 @@ const startServer = async () => {
 
     const PORT = process.env.PORT || 8000;
     server.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+      console.log(`🚀 Server running on port ${PORT} (${process.env.NODE_ENV})`);
       console.log("🌍 Allowed Origins:", allowedOrigins.join(", "));
     });
   } catch (err) {
@@ -92,7 +82,7 @@ const startServer = async () => {
 startServer();
 
 // ======================================================
-// ✅ 5. Optional Debug Logs (Development Only)
+// ✅ 5. Debug Logs (for Development Only)
 // ======================================================
 if (process.env.NODE_ENV !== "production") {
   app.use((req, res, next) => {
