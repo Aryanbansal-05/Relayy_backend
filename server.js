@@ -13,21 +13,27 @@ const app = express();
 const server = createServer(app);
 
 // ======================================================
-// ✅ 1. Dynamic CORS Configuration (for local + production)
+// ✅ 1. Dynamic CORS Configuration (Local + Deployed Domains)
 // ======================================================
 const allowedOrigins = [
-  "http://localhost:5173",        // local React frontend
-  "https://relayy-mu.vercel.app", // deployed Vercel frontend
+  "http://localhost:5173",        // Local React frontend
+  "https://relayy-mu.vercel.app", // Old Vercel deployment
+  "https://relayy.shop",          // ✅ New custom domain
+  "https://www.relayy.shop",      // ✅ Also allow www just in case
 ];
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173", // Vite dev
-      "https://relayy-mu.vercel.app", // Deployed frontend
-    ],
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn("❌ Blocked by CORS:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    credentials: true, // ✅ required to send cookies
+    credentials: true, // ✅ Required to allow cookies (auth)
   })
 );
 
@@ -45,7 +51,7 @@ app.use("/api/v1/users", userRouter);
 app.use("/api/v1/products", Productrouter);
 
 app.get("/", (req, res) => {
-  res.status(200).send("✅ Campus Marketplace Backend is Running!");
+  res.status(200).send("✅ Campus Marketplace Backend is Running with relayy.shop!");
 });
 
 // ======================================================
@@ -70,7 +76,7 @@ const startServer = async () => {
 startServer();
 
 // ======================================================
-// ✅ 5. Optional Debug Logs (for Development Only)
+// ✅ 5. Optional Debug Logs (Development Only)
 // ======================================================
 if (process.env.NODE_ENV !== "production") {
   app.use((req, res, next) => {
