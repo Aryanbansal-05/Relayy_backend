@@ -13,37 +13,25 @@ const app = express();
 const server = createServer(app);
 
 // ======================================================
-// ✅ 1. CORS Configuration
+// ✅ 1. Dynamic CORS Configuration (for local + production)
 // ======================================================
 const allowedOrigins = [
-  "http://localhost:5173",
-  "https://relayy-mu.vercel.app",
-  "https://relayy.shop",
-  "https://www.relayy.shop",
-  "https://relayy-backend-9war.onrender.com" // ✅ Add your backend URL
+  "http://localhost:5173",        // local React frontend
+  "https://relayy-mu.vercel.app", // deployed Vercel frontend
+  "https://www.relayy.shop/",
 ];
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.warn("❌ Blocked by CORS:", origin);
-      callback(new Error(`Origin ${origin} not allowed by CORS`));
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204
-};
-
-// ✅ Apply CORS middleware FIRST (before any routes)
-app.use(cors(corsOptions));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173", // Vite dev
+      "https://relayy-mu.vercel.app", // Deployed frontend
+      "https://www.relayy.shop/",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true, // ✅ required to send cookies
+  })
+);
 
 // ======================================================
 // ✅ 2. Middleware
@@ -53,33 +41,17 @@ app.use(express.json({ limit: "50kb" }));
 app.use(express.urlencoded({ extended: true, limit: "50kb" }));
 
 // ======================================================
-// ✅ 3. Debug Logs (for Development)
-// ======================================================
-if (process.env.NODE_ENV !== "production") {
-  app.use((req, res, next) => {
-    console.log("🛰️ Request:", req.method, req.originalUrl);
-    console.log("🌍 Origin:", req.headers.origin);
-    console.log("📦 Cookies:", req.cookies);
-    next();
-  });
-}
-
-// ======================================================
-// ✅ 4. Routes
+// ✅ 3. Routes
 // ======================================================
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/products", Productrouter);
 
 app.get("/", (req, res) => {
-  res.status(200).json({
-    status: "success",
-    message: "✅ Campus Marketplace Backend is Running!",
-    allowedOrigins
-  });
+  res.status(200).send("✅ Campus Marketplace Backend is Running!");
 });
 
 // ======================================================
-// ✅ 5. Database Connection
+// ✅ 4. Database Connection
 // ======================================================
 const startServer = async () => {
   try {
@@ -88,7 +60,7 @@ const startServer = async () => {
 
     const PORT = process.env.PORT || 8000;
     server.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
       console.log("🌍 Allowed Origins:", allowedOrigins.join(", "));
     });
   } catch (err) {
@@ -98,3 +70,14 @@ const startServer = async () => {
 };
 
 startServer();
+
+// ======================================================
+// ✅ 5. Optional Debug Logs (for Development Only)
+// ======================================================
+if (process.env.NODE_ENV !== "production") {
+  app.use((req, res, next) => {
+    console.log("🛰️  Request:", req.method, req.originalUrl);
+    console.log("📦 Cookies:", req.cookies);
+    next();
+  });
+}
