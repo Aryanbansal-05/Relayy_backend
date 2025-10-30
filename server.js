@@ -39,8 +39,8 @@ const corsOptions = {
 // ✅ Apply CORS globally before routes
 app.use(cors(corsOptions));
 
-// ✅ Explicitly handle preflight requests
-app.options("*", cors(corsOptions));
+// ✅ Preflight handler (Express v5-safe)
+app.options(/^\/.*/, cors(corsOptions));
 
 // ======================================================
 // ✅ 2. Middleware
