@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import userRouter from "./routes/user.routes.js";
 import Productrouter from "./routes/product.routes.js";
+import router from "./routes/email.Routes.js";
 
 dotenv.config();
 
@@ -54,6 +55,7 @@ app.use(express.urlencoded({ extended: true, limit: "50kb" }));
 // ======================================================
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/products", Productrouter);
+app.use("/api", router);
 
 app.get("/", (req, res) => {
   res.status(200).send("✅ Backend running perfectly with relayy.shop!");
