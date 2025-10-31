@@ -66,10 +66,7 @@ export const sendOfferEmail = async ({
               }
             </div>
 
-            <a href="https://relayy.shop/dashboard/offers"
-               style="display:inline-block; margin-top:16px; padding:12px 24px; background:#10b981; color:white; text-decoration:none; border-radius:8px; font-weight:600;">
-              View Offer on Relayy
-            </a>
+            
           </div>
 
           <div style="background-color: #f9fafb; color: #6b7280; font-size: 13px; text-align: center; padding: 20px; border-top: 1px solid #e5e7eb;">
