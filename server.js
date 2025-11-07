@@ -7,12 +7,13 @@ import cookieParser from "cookie-parser";
 import userRouter from "./routes/user.routes.js";
 import Productrouter from "./routes/product.routes.js";
 import router from "./routes/email.Routes.js";
-
+import { initializeSocket } from "./socket.js";
+import chatRouter from "./routes/chat.Routes.js";
 dotenv.config();
 
 const app = express();
 const server = createServer(app);
-
+const io = initializeSocket(server);
 // ======================================================
 // ✅ 1. Correct CORS Configuration (LOCAL + LIVE)
 // ======================================================
@@ -56,6 +57,7 @@ app.use(express.urlencoded({ extended: true, limit: "50kb" }));
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/products", Productrouter);
 app.use("/api", router);
+app.use("/api/v1/chats", chatRouter);
 
 app.get("/", (req, res) => {
   res.status(200).send("✅ Backend running perfectly with relayy.shop!");
