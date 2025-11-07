@@ -1,4 +1,4 @@
-import Chat from "../models/chat.model.js";
+import Chat from "../models/Chat.model.js";
 import { User } from "../models/user.model.js";
 import httpStatus from "http-status";
 

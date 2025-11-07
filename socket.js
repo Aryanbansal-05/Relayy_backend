@@ -1,6 +1,6 @@
 import { Server } from "socket.io";
 import { verifySocketToken } from "./middleware/authmiddleware.js";
-import Chat from "./models/chat.model.js";
+import Chat from "./models/Chat.model.js";
 
 const userSocketMap = new Map();
 
