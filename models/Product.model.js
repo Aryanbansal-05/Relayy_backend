@@ -10,6 +10,7 @@ const productSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     username: { type: String, required: true },
     userEmail: { type: String, required: true },
+    userHostel: { type: String, required: true },
   },
   { timestamps: true }
 );

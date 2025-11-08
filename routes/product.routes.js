@@ -37,6 +37,7 @@ Productrouter.post("/", protect, upload.array("images", 4), async (req, res) => 
       userId: req.user._id,
       username: req.user.username,
       userEmail: req.user.email,
+      userHostel:req.user.hostel,
     });
 
     console.log("✅ Product created successfully:", product._id);

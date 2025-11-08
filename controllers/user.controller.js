@@ -3,7 +3,6 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import httpStatus from "http-status";
 import { sendOtpEmail } from "../utils/sendOtpEmail.js";
-import { sendOfferEmail } from "../utils/sendOfferEmail.js";
 // ---------------- Generate 6-digit OTP ----------------
 const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
