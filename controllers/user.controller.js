@@ -1,23 +1,46 @@
+// backend/controllers/user.controller.js
 import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import httpStatus from "http-status";
 import { sendOtpEmail } from "../utils/sendOtpEmail.js";
+
 // ---------------- Generate 6-digit OTP ----------------
 const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+// simple mobile validator: 10 digits (adjust if you expect country codes)
+const isValidMobile = (m) => {
+  if (!m) return false;
+  const s = String(m).trim();
+  return /^[0-9]{10}$/.test(s);
+};
 
 // ---------------- SIGNUP ----------------
 const signup = async (req, res) => {
   try {
-    const { username, email, password, college, hostel } = req.body;
+    const { username, email, password, college, hostel, mobile } = req.body;
 
     if (!username || !email || !password || !college || !hostel) {
-      return res.status(httpStatus.BAD_REQUEST).json({ message: "All fields are required" });
+      return res.status(httpStatus.BAD_REQUEST).json({ message: "All fields (username, email, password, college, hostel) are required" });
+    }
+
+    // Validate mobile if provided
+    if (mobile && !isValidMobile(mobile)) {
+      return res.status(httpStatus.BAD_REQUEST).json({ message: "Invalid mobile number. Provide a 10-digit number without spaces or symbols." });
     }
 
     // Normalize email for lookup
     const normalizedEmail = String(email).trim().toLowerCase();
 
+    // Check for duplicate mobile if provided
+    if (mobile) {
+      const existingMobile = await User.findOne({ mobile: String(mobile).trim() });
+      if (existingMobile && existingMobile.email !== normalizedEmail) {
+        return res
+          .status(httpStatus.CONFLICT)
+          .json({ message: "Mobile number already registered with another account." });
+      }
+    }
     // Check if user already exists
     const existingUser = await User.findOne({ email: normalizedEmail });
 
@@ -41,6 +64,7 @@ const signup = async (req, res) => {
       existingUser.password = hashedPassword;
       existingUser.college = college;
       existingUser.hostel = hostel;
+      if (mobile) existingUser.mobile = String(mobile).trim();
       existingUser.otp = otp;
       existingUser.otpExpires = otpExpires;
       existingUser.isVerified = false;
@@ -52,6 +76,7 @@ const signup = async (req, res) => {
         password: hashedPassword,
         college,
         hostel,
+        mobile: mobile ? String(mobile).trim() : undefined,
         otp,
         otpExpires,
         isVerified: false,
@@ -182,7 +207,7 @@ const login = async (req, res) => {
 
     return res.status(httpStatus.OK).json({
       message: "Login successful",
-      user: { username: user.username, email: user.email, college: user.college, hostel: user.hostel },
+      user: { username: user.username, email: user.email, college: user.college, hostel: user.hostel, mobile: user.mobile },
       token,
     });
   } catch (error) {
@@ -214,7 +239,7 @@ const verifyUser = async (req, res) => {
     if (!token) return res.status(httpStatus.UNAUTHORIZED).json({ message: "No token found" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select("username email college hostel");
+    const user = await User.findById(decoded.id).select("username email college hostel mobile");
     if (!user) return res.status(httpStatus.NOT_FOUND).json({ message: "User not found" });
 
     return res.status(httpStatus.OK).json({ user });
