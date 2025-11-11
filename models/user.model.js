@@ -8,11 +8,10 @@ const userSchema = new Schema(
       type: String,
       trim: true,
       unique: true,
-      sparse: true, // allows null/undefined values without breaking uniqueness
+      sparse: true,
       required: true,
-      match: [/^[0-9]{10}$/, "Invalid mobile number"], // Only allows 10-digit numbers
+      match: [/^[0-9]{10}$/, "Invalid mobile number"],
     },
-
     password: { type: String, required: true },
     college: { type: String, required: true, trim: true },
     hostel: { type: String, required: true, trim: true },
@@ -21,6 +20,10 @@ const userSchema = new Schema(
     isVerified: { type: Boolean, default: false },
     token: { type: String },
     sessionExpiry: { type: Date },
+
+    // ✅ Forgot Password fields
+    resetOtp: { type: String },
+    resetOtpExpires: { type: Date },
   },
   { timestamps: true }
 );
