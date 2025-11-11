@@ -249,4 +249,69 @@ const verifyUser = async (req, res) => {
   }
 };
 
-export { signup, verifyOtp, resendOtp, login, logout, verifyUser };
+// controllers/user.controller.js  (replace your updateMe with this)
+const updateMe = async (req, res) => {
+  try {
+    console.log(">>> updateMe called");
+    console.log("req.user:", req.user ? { _id: req.user._id, email: req.user.email } : null);
+    console.log("req.body:", req.body);
+
+    const authUser = req.user;
+    if (!authUser) {
+      console.warn("updateMe: no authUser on req (not authenticated)");
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const allowedFields = ["username", "email", "college", "hostel"];
+    const bodyKeys = Object.keys(req.body || {});
+    const updates = {};
+
+    bodyKeys.forEach((key) => {
+      if (allowedFields.includes(key)) updates[key] = req.body[key];
+    });
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: "No updatable fields provided" });
+    }
+
+    if (updates.email) {
+      updates.email = String(updates.email).trim().toLowerCase();
+      const existing = await User.findOne({ email: updates.email }).select("_id");
+      if (existing && String(existing._id) !== String(authUser._id)) {
+        return res.status(409).json({ message: "Email is already in use by another account" });
+      }
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      authUser._id,
+      { $set: updates },
+      { new: true, runValidators: true, context: "query" }
+    ).select("-password -otp -otpExpires -token");
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    console.log("updateMe: success for user", updatedUser._id);
+    return res.status(200).json({
+      message: "Profile updated successfully",
+      user: { _id: updatedUser._id, username: updatedUser.username, email: updatedUser.email, college: updatedUser.college, hostel: updatedUser.hostel, mobile: updatedUser.mobile },
+    });
+  } catch (err) {
+    // Detailed logging for dev
+    console.error("updateMe error:", err.stack || err);
+    // In dev return the stack too so client shows useful error. Remove stack in production.
+    return res.status(500).json({ message: "Failed to update profile", error: err.message, stack: err.stack });
+  }
+};
+
+
+export {
+  signup,
+  verifyOtp,
+  resendOtp,
+  login,
+  logout,
+  verifyUser,
+  updateMe,
+};
