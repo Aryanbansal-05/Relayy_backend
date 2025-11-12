@@ -9,6 +9,7 @@ import Productrouter from "./routes/product.routes.js";
 import router from "./routes/email.Routes.js";
 import { initializeSocket } from "./socket.js";
 import chatRouter from "./routes/chat.Routes.js";
+import pricePredictRoute from "./routes/pricePredict.Route.js";
 dotenv.config();
 
 const app = express();
@@ -58,7 +59,7 @@ app.use("/api/v1/users", userRouter);
 app.use("/api/v1/products", Productrouter);
 app.use("/api", router);
 app.use("/api/v1/chats", chatRouter);
-
+app.use("/api/price", pricePredictRoute);
 app.get("/", (req, res) => {
   res.status(200).send("✅ Backend running perfectly with relayy.shop!");
 });
