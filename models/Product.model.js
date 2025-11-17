@@ -11,8 +11,6 @@ const productSchema = new mongoose.Schema(
     username: { type: String, required: true },
     userEmail: { type: String, required: true },
     userHostel: { type: String, required: true },
-    isSold: { type: Boolean, default: false },
-    soldAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
