@@ -162,19 +162,41 @@ const resendOtp = async (req, res) => {
 };
 
 // ---------------- LOGIN ----------------
+// ---------------- LOGIN (email-based) ----------------
 const login = async (req, res) => {
   try {
-    const { username, password } = req.body;
-    if (!username || !password) return res.status(httpStatus.BAD_REQUEST).json({ message: "Please provide username and password" });
+    const { email, password } = req.body;
 
-    // only allow verified users to login
-    const user = await User.findOne({ username: String(username).trim(), isVerified: true });
-    if (!user) return res.status(httpStatus.UNAUTHORIZED).json({ message: "User not found or not verified" });
+    if (!email || !password) {
+      return res
+        .status(httpStatus.BAD_REQUEST)
+        .json({ message: "Please provide email and password" });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+
+    // only allow verified users to login, searched by email
+    const user = await User.findOne({
+      email: normalizedEmail,
+      isVerified: true,
+    });
+
+    if (!user) {
+      return res
+        .status(httpStatus.UNAUTHORIZED)
+        .json({ message: "User not found or not verified" });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid credentials" });
+    if (!isMatch) {
+      return res
+        .status(httpStatus.UNAUTHORIZED)
+        .json({ message: "Invalid credentials" });
+    }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
     const sessionExpiry = new Date(Date.now() + 60 * 60 * 1000);
 
     user.sessionExpiry = sessionExpiry;
@@ -202,9 +224,15 @@ const login = async (req, res) => {
     });
   } catch (error) {
     console.error("Login error:", error?.stack || error);
-    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: "Server error during login", error: error?.message || "internal_error" });
+    return res
+      .status(httpStatus.INTERNAL_SERVER_ERROR)
+      .json({
+        message: "Server error during login",
+        error: error?.message || "internal_error",
+      });
   }
 };
+
 
 // ---------------- LOGOUT ----------------
 const logout = async (req, res) => {
